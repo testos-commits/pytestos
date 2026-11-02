@@ -1,0 +1,132 @@
+@import '/vendor/filament/filament/resources/css/theme.css';
+@config 'tailwind.config.js';
+
+.fi-sidebar-header {
+    display: none;
+}
+
+.h-chat {
+    height: calc(100vh - 10rem);
+}
+
+
+.fi-sidebar-nav  {
+ background-color: white;
+}
+.fi-main, .fi-main-ctn {
+    background-color: #F9FAFC;
+}
+
+.btn {
+    @apply text-sm sm:text-base md:text-sm rounded-md py-2 px-4 font-medium border;
+}
+
+.tab-active {
+    @apply text-white bg-py-blue;
+}
+
+.tab {
+    @apply text-py-blue;
+    @apply border-none;
+    @apply bg-py-blue-200
+}
+
+.focus\:ring-0:focus {
+    @apply rounded-md;
+}
+
+.fi-sidebar:not(.fi-sidebar-open) {
+    @apply w-24;
+}
+
+.fi-sidebar:not(.fi-sidebar-open) .fi-sidebar-item a{
+    @apply h-10 w-10;
+}
+
+.fi-sidebar:not(.fi-sidebar-open) .logo-img {
+    display:none;
+}
+
+.fi-sidebar:not(.fi-sidebar-open) .fi-dropdown {
+    @apply shrink-0 h-12 w-12;
+}
+
+.fi-sidebar:not(.fi-sidebar-open) .fi-sidebar-nav-tenant-menu-ctn {
+    @apply !mx-auto;
+}
+
+.fi-sidebar:not(.fi-sidebar-open) .fi-sidebar-group {
+    @apply px-4 py-6;
+}
+
+.fi-sidebar{
+background-color: white;
+}
+
+/** IMAGE VIEWER **/
+
+.image-viewer img {
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+.image-viewer img:hover {opacity: 0.7;}
+
+/* The Modal (background) */
+#image-preview {
+    position: fixed;
+    z-index: 99;
+    padding-top: 100px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgb(0,0,0);
+    background-color: rgba(0,0,0,0.9);
+}
+#image-preview .modal-content {
+    margin: auto;
+    display: block;
+    width: 80%;
+    max-width: 700px;
+    animation-name: zoom;
+    animation-duration: 0.6s;
+}
+
+@keyframes zoom {
+    from {transform:scale(0)} 
+    to {transform:scale(1)}
+}
+#image-preview .close {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    transition: 0.3s;
+}
+#image-preview .close:hover,
+#image-preview .close:focus {
+    color: #bbb;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+@media only screen and (max-width: 700px){
+    #image-preview .modal-content {
+        width: 100%;
+    }
+}

@@ -1,0 +1,8 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+@import 'flowbite';
+
+h1,h2,h3,h4,h5,h6,p, span {
+    @apply font-DM;
+}
