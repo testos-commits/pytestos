@@ -19,6 +19,13 @@ class TestDemoSeeder extends Seeder
         $now = now();
         $json = fn (string $en) => json_encode(['en' => $en]);
 
+        // Reference images used by the demo auditions
+        $imgDir = storage_path('app/public/audition-images');
+        @mkdir($imgDir, 0775, true);
+        foreach (glob(database_path('seeders/test-images/*.jpg')) as $img) {
+            copy($img, $imgDir . '/' . basename($img));
+        }
+
         // Countries
         $countryIds = [];
         foreach ([
@@ -32,14 +39,15 @@ class TestDemoSeeder extends Seeder
         }
 
         // Staff accounts (test passwords only)
+        $staffPassword = env('TEST_ADMIN_PASSWORD', 'password');
         $admin = User::create([
-            'email' => 'admin@test.local', 'password' => Hash::make('password'),
+            'email' => 'admin@test.local', 'password' => Hash::make($staffPassword),
             'is_admin' => true, 'name' => 'Test Super Admin', 'email_verified_at' => $now,
         ]);
         $admin->assignRole('super admin');
 
         $director = User::create([
-            'email' => 'director@test.local', 'password' => Hash::make('password'),
+            'email' => 'director@test.local', 'password' => Hash::make($staffPassword),
             'is_director' => true, 'name' => 'Test Super Director', 'email_verified_at' => $now,
         ]);
         $director->assignRole('super director');
@@ -63,7 +71,7 @@ class TestDemoSeeder extends Seeder
         $profileIds = [];
         foreach ($talents as $i => [$first, $last, $gender, $cc, $dob]) {
             $u = User::create([
-                'email' => strtolower($first) . ($i + 1) . '@talent.test', 'password' => Hash::make('password'),
+                'email' => strtolower($first) . ($i + 1) . '@talent.test', 'password' => Hash::make(\Illuminate\Support\Str::random(32)),
                 'name' => "$first $last", 'email_verified_at' => $now,
             ]);
             $profileIds[] = DB::table('user_profiles')->insertGetId([
