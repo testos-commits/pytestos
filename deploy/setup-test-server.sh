@@ -90,6 +90,7 @@ ENV
 
 echo ">>> Installing app libraries and building"
 cd "$APP_DIR"
+mkdir -p storage/logs storage/framework/{sessions,views,cache/data,testing} storage/app/public bootstrap/cache
 export COMPOSER_ALLOW_SUPERUSER=1
 composer install --no-interaction --no-progress --no-dev --optimize-autoloader
 php artisan key:generate --force
