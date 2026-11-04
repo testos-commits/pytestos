@@ -4,10 +4,18 @@
             <p class="text-lg text-gray-900  mt-5">No auditions found</p>
         @endif
         @foreach ($this->auditions as $audition)
-            <div class="rounded-md bg-white py-4 px-8 mb-4 grid md:grid-cols-[1fr_2fr_1fr]">
+            <div class="rounded-md bg-white py-4 px-8 mb-4 grid md:grid-cols-[1fr_2fr_1fr]"
+                @if ($audition->is_draft) style="border: 2px dashed #f59e0b;" @endif>
                 <img src="{{ config('aws.aws-urls.admin_base_url') . $audition->image }}"
-                    class="h-32 rounded-md w-full object-contain" />
+                    class="h-32 rounded-md w-full object-contain"
+                    @if ($audition->is_draft) style="opacity: .6;" @endif />
                 <div class="py-2 px-4">
+                    @if ($audition->is_draft)
+                        <div style="display:inline-block;background:#fef3c7;color:#92400e;font-size:12px;font-weight:600;padding:2px 10px;border-radius:9999px;margin-bottom:6px;">
+                            DRAFT · hidden from talents
+                        </div>
+                        <br>
+                    @endif
                     <a href="/admin/auditions/{{ $audition->id }}/manage"
                         class="font-bold text-py-blue md:text-black text-sm md:text-base lg:text-lg mb-2 hover:text-py-blue">{{ $audition->title }}</a>
                     <p class="text-gray-800 text-sm">{{ $audition->description }}</p>
@@ -53,6 +61,18 @@
                 </div>
 
                 <div class="grid grid-cols-1 mt-4 md:mt-0 justify-evenly gap-y-2">
+                    @if ($audition->is_draft && auth()->user()->hasPermissionTo('create audition'))
+                        <button type="button"
+                            wire:click="publishAudition({{ $audition->id }})"
+                            wire:confirm="Publish this audition? Talents in its countries will be able to see it and will get a notification."
+                            wire:loading.attr="disabled"
+                            class="btn min-w-[125px] text-center flex items-center justify-center"
+                            style="background:#16a34a;border-color:#16a34a;color:#fff;">
+                            <x-heroicon-o-paper-airplane class="h-4 w-4 mr-2" />
+                            Publish
+                        </button>
+                    @endif
+
                     @if (auth()->user()->hasPermissionTo('edit audition'))
                         <a href="/admin/auditions/{{ $audition->id }}/edit?projectId={{ $audition->project_id }}"
                             class="btn text-py-orange min-w-[125px] text-center border-py-orange block hover:bg-py-orange hover:text-white flex items-center justify-center">

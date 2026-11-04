@@ -20,7 +20,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Log;
-use App\Jobs\NotifyAppUsers;
+use App\Services\AuditionService;
+use Filament\Actions\Action;
 
 class CreateAudition extends CreateRecord
 {
@@ -28,6 +29,9 @@ class CreateAudition extends CreateRecord
 
     protected static string $resource = AuditionResource::class;
     public $projectId;
+
+    /** True while the "Save as draft" button is being processed. */
+    public bool $saveAsDraft = false;
     protected $translatableFields = ['title', 'description', 'location', 'duration', 'image'];
 
 
@@ -52,6 +56,8 @@ class CreateAudition extends CreateRecord
         $data = $this->setMutatedData($data);
 
         $data['project_id'] = $this->projectId;
+
+        $data['is_draft'] = $this->saveAsDraft;
 
         $data['show_budget'] = $data['show_budget'] ?? false;
         
@@ -81,12 +87,43 @@ class CreateAudition extends CreateRecord
 
     protected function afterCreate(): void
     {
-        NotifyAppUsers::dispatch(
-            'NEW_AUDITION',
-            $this->getRecord(),
-            $this->data['countries'],
-            'audition_country'
-        )->onQueue('notification-chunks');
+        // Drafts are hidden from talents, so nobody is notified until it is published
+        if ($this->getRecord()->isDraft()) {
+            return;
+        }
+
+        AuditionService::notifyNewAudition($this->getRecord(), $this->data['countries']);
+    }
+
+    protected function getFormActions(): array
+    {
+        return [
+            $this->getCreateFormAction(),
+            Action::make('saveDraft')
+                ->label('Save as draft')
+                ->color('gray')
+                ->action('createDraft'),
+            $this->getCreateAnotherFormAction(),
+            $this->getCancelFormAction(),
+        ];
+    }
+
+    public function createDraft(): void
+    {
+        $this->saveAsDraft = true;
+
+        try {
+            $this->create();
+        } finally {
+            $this->saveAsDraft = false;
+        }
+    }
+
+    protected function getCreatedNotificationTitle(): ?string
+    {
+        return $this->saveAsDraft
+            ? 'Saved as draft. Talents cannot see it until you publish it.'
+            : parent::getCreatedNotificationTitle();
     }
 
     protected function getRedirectUrl(): string

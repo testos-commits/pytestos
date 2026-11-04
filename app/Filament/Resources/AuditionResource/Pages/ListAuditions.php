@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Blade;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Actions\CreateAction;
 use App\Interfaces\Searchable;
+use App\Models\Audition;
+use Filament\Notifications\Notification;
 
 class ListAuditions extends ListRecords implements Searchable
 {
@@ -33,6 +35,23 @@ class ListAuditions extends ListRecords implements Searchable
 
     public function updatedSearchQuery(string $value): void
     {
+        $this->auditions = AuditionService::getProjectAuditions($this->projectId, $this->searchQuery);
+    }
+
+    /** Publish a draft: makes it visible to talents and sends the new-audition notification. */
+    public function publishAudition(int $auditionId): void
+    {
+        abort_unless(auth()->user()->hasPermissionTo('create audition'), 403);
+
+        $audition = Audition::where('project_id', $this->projectId)->findOrFail($auditionId);
+
+        if (AuditionService::publish($audition)) {
+            Notification::make()
+                ->title('Published. Talents can now see and apply to "' . $audition->title . '".')
+                ->success()
+                ->send();
+        }
+
         $this->auditions = AuditionService::getProjectAuditions($this->projectId, $this->searchQuery);
     }
 

@@ -163,9 +163,23 @@ class EditAudition extends EditRecord
             ->successRedirectUrl(null)
             ->requiresConfirmation();
     }
+    public function publishAction()
+    {
+        return Actions\Action::make('Publish')
+            ->color('success')
+            ->requiresConfirmation()
+            ->modalDescription('Talents in this audition\'s countries will be able to see it and will get a notification.')
+            ->action(function (): void {
+                \App\Services\AuditionService::publish($this->record);
+                $this->record->refresh();
+            })
+            ->successNotificationTitle('Published. Talents can now see this audition.');
+    }
+
     protected function getHeaderActions(): array
     {
         return [
+            ...($this->record->isDraft() ? [$this->publishAction] : []),
             ...(!$this->record->isTerminated() ? [$this->terminateAction] : []),
             Actions\DeleteAction::make()
                 ->successRedirectUrl(route('filament.admin.resources.auditions.index', [

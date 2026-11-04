@@ -17,6 +17,7 @@ class Audition extends Model
     protected $guarded = ['id'];
     protected $casts = [
         'meta' => 'array',
+        'is_draft' => 'boolean',
     ];
 
     public $translatable = ['title', 'description', 'image', 'location', 'duration'];
@@ -215,6 +216,17 @@ class Audition extends Model
         $query->whereHas('countries', function ($query) use ($countryId) {
             $query->where('country_id', $countryId);
         });
+    }
+
+    /** Only auditions talents are allowed to see (drafts are hidden). */
+    public function scopePublished($query)
+    {
+        $query->where('auditions.is_draft', false);
+    }
+
+    public function isDraft(): bool
+    {
+        return (bool) $this->is_draft;
     }
 
     /** ACCESSORS */

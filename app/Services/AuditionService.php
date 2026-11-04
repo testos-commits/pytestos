@@ -9,6 +9,7 @@ use App\Http\Resources\AuditionResource;
 use App\Models\Profile;
 use Carbon\Carbon;
 use App\Traits\Filterable;
+use App\Jobs\NotifyAppUsers;
 
 class AuditionService extends MessageHandler
 {
@@ -36,6 +37,7 @@ class AuditionService extends MessageHandler
         $userProfile = auth()->user()->profile;
 
         $auditions = Audition::filterCountry($userProfile->country_id)
+            ->published()
             // ->projectActive()
             ->withUserApplications($userProfile->id)
             ->with(['countries', 'project'])
@@ -55,6 +57,7 @@ class AuditionService extends MessageHandler
         $userProfile = auth()->user()->profile;
 
         $allAuditions = Audition::filterCountry($userProfile->country_id)
+            ->published()
             ->projectActive()
             ->select('auditions.min_age', 'auditions.max_age', 'auditions.gender', 'auditions.meta', 'auditions.id')
             ->get();
@@ -138,7 +141,7 @@ class AuditionService extends MessageHandler
     public function getById($id)
     {
         $userProfile = auth()->user()->profile;
-        $audition = Audition::withUserApplications($userProfile->id)->find($id);
+        $audition = Audition::withUserApplications($userProfile->id)->published()->find($id);
 
         if (!$audition) {
             return false;
@@ -187,9 +190,46 @@ class AuditionService extends MessageHandler
         })->find($auditionId);
     }
 
+    /**
+     * Notify talents in the audition's countries that a new audition is live.
+     * Used when an audition is created as published, or when a draft is published.
+     */
+    public static function notifyNewAudition(Audition $audition, ?array $countryIds = null): void
+    {
+        $countryIds = $countryIds ?? $audition->countries()->pluck('countries.id')->map(fn($id) => (string) $id)->all();
+
+        if (empty($countryIds)) {
+            return;
+        }
+
+        NotifyAppUsers::dispatch(
+            'NEW_AUDITION',
+            $audition,
+            $countryIds,
+            'audition_country'
+        )->onQueue('notification-chunks');
+    }
+
+    /**
+     * Make a draft visible to talents and send the "new audition" notification.
+     * Returns false if it was already published.
+     */
+    public static function publish(Audition $audition): bool
+    {
+        if (!$audition->isDraft()) {
+            return false;
+        }
+
+        $audition->update(['is_draft' => false]);
+        self::notifyNewAudition($audition);
+
+        return true;
+    }
+
     public function apply($auditionId)
     {
-        $audition = Audition::findOrFail($auditionId);
+        // Drafts behave as if they don't exist for talents
+        $audition = Audition::published()->findOrFail($auditionId);
         $canApply = auth()->user()->profile->canApply();
 
         if ($canApply['status'] == false) {
